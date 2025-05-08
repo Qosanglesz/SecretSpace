@@ -8,7 +8,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
-  Put,
+  Put, Query,
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -39,6 +39,19 @@ export class PlacesController {
   ): Promise<Place> {
     const imageBuffers = files.images?.map(f => f.buffer) || [];
     return this.placesService.update(placeId, updatePlaceDto, imageBuffers);
+  }
+
+  @Get('nearby')
+  async findNearby(
+      @Query('lat') lat: string,
+      @Query('lng') lng: string,
+      @Query('radius') radius = '0.5', // radius in kilometers
+  ): Promise<Place[]> {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const radiusKm = parseFloat(radius);
+
+    return this.placesService.findNearby(latitude, longitude, radiusKm);
   }
 
   @Get()

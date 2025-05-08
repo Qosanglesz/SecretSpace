@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Place } from './entities/place.entity';
 import { PlaceImage } from './entities/place-image.entity';
 import { CreatePlaceDto } from './dto/create-place.dto';
-import { UpdatePlaceDto } from './dto/update-place.dto'; // Import the UpdatePlaceDto
+import { UpdatePlaceDto } from './dto/update-place.dto';
 
 @Injectable()
 export class PlacesService {
@@ -78,6 +78,23 @@ export class PlacesService {
 
     return placeWithImages;
   }
+
+  async findNearby(lat: number, lng: number, radiusKm: number): Promise<Place[]> {
+    const earthRadius = 6371; // Earth radius in kilometers
+
+    return this.placeRepository
+        .createQueryBuilder('place')
+        .leftJoinAndSelect('place.images', 'image')
+        .where(`
+      ${earthRadius} * acos(
+        cos(radians(:lat)) * cos(radians(place.latitude)) *
+        cos(radians(place.longitude) - radians(:lng)) +
+        sin(radians(:lat)) * sin(radians(place.latitude))
+      ) < :radius
+    `, { lat, lng, radius: radiusKm })
+        .getMany();
+  }
+
 
   async findAll(): Promise<Place[]> {
     return this.placeRepository.find({ relations: ['images'] });

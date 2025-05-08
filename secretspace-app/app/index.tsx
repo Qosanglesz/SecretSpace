@@ -8,6 +8,7 @@ export default function Index() {
         <ScrollView>
             <Button title="Go to Create Page" onPress={() => router.push('/place/create')}/>
             <Button title="All" onPress={() => router.push('/place/all')}/>
+            <Button title="nearby" onPress={() => router.push('/nearby')}/>
         </ScrollView>
     );
 }
