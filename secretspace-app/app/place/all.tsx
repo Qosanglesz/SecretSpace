@@ -110,7 +110,10 @@ export default function AllPlacesScreen() {
                         )}
 
                         <View className="flex-row justify-between mt-2">
-                            <TouchableOpacity className="bg-blue-500 px-4 py-2 rounded-lg">
+                            <TouchableOpacity
+                                className="bg-blue-500 px-4 py-2 rounded-lg"
+                                onPress={() => router.push(`/place/${place.place_id}`)}
+                            >
                                 <Text className="text-white">View</Text>
                             </TouchableOpacity>
 
