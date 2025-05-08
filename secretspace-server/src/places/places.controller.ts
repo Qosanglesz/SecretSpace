@@ -4,7 +4,7 @@ import {
   Body,
   UploadedFiles,
   UseInterceptors,
-  Get,
+  Get, Param, Delete, ParseUUIDPipe,
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -27,5 +27,10 @@ export class PlacesController {
   @Get()
   async findAll() {
     return this.placesService.findAll();
+  }
+
+  @Delete(':id')
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
+    return this.placesService.deleted(id);
   }
 }

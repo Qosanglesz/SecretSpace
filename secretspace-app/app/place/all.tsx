@@ -63,7 +63,7 @@ export default function AllPlacesScreen() {
                 onPress: async () => {
                     try {
                         await axios.delete(`${process.env.EXPO_PUBLIC_API_URL}/places/${id}`);
-                        fetchPlaces();
+                        await fetchPlaces();
                     } catch (err) {
                         console.error(err);
                         Alert.alert('Error', 'Failed to delete');

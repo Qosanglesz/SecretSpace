@@ -1,10 +1,9 @@
-import {Injectable, InternalServerErrorException, NotFoundException} from '@nestjs/common';
+import {Injectable, NotFoundException} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {Place} from './entities/place.entity';
 import {PlaceImage} from './entities/place-image.entity';
 import {CreatePlaceDto} from './dto/create-place.dto';
-import {NotFoundError} from "rxjs";
 
 @Injectable()
 export class PlacesService {
@@ -40,5 +39,21 @@ export class PlacesService {
 
   async findAll(): Promise<Place[]> {
     return this.placeRepository.find({ relations: ['images'] });
+  }
+
+  async findOne(id: string): Promise<Place> {
+    const place = await this.placeRepository.findOne({
+      where: {place_id: id},
+      relations: ['images']
+    })
+    if (!place) {
+      throw new NotFoundException('Place not found after creation');
+    }
+    return place;
+  }
+
+  async deleted(id: string): Promise<Place> {
+    const place = await this.findOne(id);
+    return this.placeRepository.remove(place)
   }
 }
