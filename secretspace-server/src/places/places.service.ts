@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto';
+import {InjectRepository} from "@nestjs/typeorm";
+import {Place} from "./entities/place.entity";
+import {Repository} from "typeorm";
+import {CloudinaryService} from "../cloudinary/cloudinary.service";
 
 @Injectable()
 export class PlacesService {
-  create(createPlaceDto: CreatePlaceDto) {
-    return 'This action adds a new place';
-  }
+  constructor(
+      @InjectRepository(Place) private readonly placeRepository: Repository<Place>,
+      private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
-  findAll() {
-    return `This action returns all places`;
-  }
+  async create(
+      createPlaceDto: CreatePlaceDto,
+      imageBuffer: Buffer | null,
+  ): Promise<Place> {
+    const place = this.placeRepository.create({
+      ...createPlaceDto,
+      image: imageBuffer,
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} place`;
-  }
-
-  update(id: number, updatePlaceDto: UpdatePlaceDto) {
-    return `This action updates a #${id} place`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} place`;
+    return this.placeRepository.save(place);
   }
 }

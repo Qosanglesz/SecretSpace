@@ -26,18 +26,20 @@ export class Place {
     @Column({ type: "decimal", precision: 10, scale: 6 })
     longitude: number;
 
-    @Column({ type: "text", array: true })
-    image: string[];
+    @Column({ type: "bytea", nullable: true })
+    image: Buffer | null;
 
     @OneToMany(() => Rating, rating => rating.place, {
         cascade: true,
-        onDelete: "CASCADE"
+        onDelete: "CASCADE",
+        nullable: true,
     })
     ratings: Rating[];
 
     @OneToMany(() => Comment, comment => comment.place, {
         cascade: true,
-        onDelete: "CASCADE"
+        onDelete: "CASCADE",
+        nullable: true,
     })
     comments: Comment[];
 

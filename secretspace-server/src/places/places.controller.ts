@@ -1,34 +1,27 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UploadedFiles,
+  UseInterceptors
+} from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
-import { UpdatePlaceDto } from './dto/update-place.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('places')
 export class PlacesController {
   constructor(private readonly placesService: PlacesService) {}
 
   @Post()
-  create(@Body() createPlaceDto: CreatePlaceDto) {
-    return this.placesService.create(createPlaceDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.placesService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.placesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlaceDto: UpdatePlaceDto) {
-    return this.placesService.update(+id, updatePlaceDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.placesService.remove(+id);
+  @UseInterceptors(
+      FileFieldsInterceptor([{ name: 'images', maxCount: 1 }]) // รับแค่ 1 ภาพ หากต้องการหลายภาพต้องจัดการเพิ่ม
+  )
+  async create(
+      @Body() createPlaceDto: CreatePlaceDto,
+      @UploadedFiles() files: { images?: Express.Multer.File[] },
+  ) {
+    const imageBuffer = files.images?.[0]?.buffer || null;
+    return this.placesService.create(createPlaceDto, imageBuffer);
   }
 }

@@ -5,6 +5,7 @@ import {TypeOrmModule} from "@nestjs/typeorm";
 import {Place} from "./entities/place.entity";
 import {Rating} from "./entities/rating.entity";
 import {Comment} from "./entities/comment.entity";
+import {CloudinaryService} from "../cloudinary/cloudinary.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([
@@ -13,6 +14,6 @@ import {Comment} from "./entities/comment.entity";
       Comment,
   ])],
   controllers: [PlacesController],
-  providers: [PlacesService],
+  providers: [PlacesService, CloudinaryService],
 })
 export class PlacesModule {}

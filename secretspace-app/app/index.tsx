@@ -1,9 +1,10 @@
-import { Text, View } from "react-native";
+import {Button} from "react-native";
+import {useRouter} from "expo-router";
 
 export default function Index() {
-  return (
-    <View className="flex items-center justify-center h-full">
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+    const router = useRouter();
+
+    return (
+        <Button title="Go to Create Page" onPress={() => router.push('/place/create')}/>
+    );
 }
