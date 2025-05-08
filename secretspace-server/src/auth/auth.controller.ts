@@ -32,14 +32,14 @@ export class AuthController {
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24,
     });
-    return { message: 'Login successful' };
+    return { message: 'Login successful', token: token };
   }
 
   @Get('logout')
   @HttpCode(200)
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('jwt');
-    return { message: 'Logout successful' };
+    return { message: 'Logout successful'};
   }
 
   @UseGuards(JwtAuthGuard)

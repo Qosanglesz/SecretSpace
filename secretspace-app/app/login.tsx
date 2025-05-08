@@ -1,27 +1,42 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { router } from 'expo-router';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!username || !password) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
         }
 
-        globalThis.localStorage = globalThis.localStorage || new Map();
-        const user = globalThis.localStorage.get(username);
+        try {
+            setIsLoading(true); // Show loading indicator while logging in
+            const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/login`, {
+                username,
+                password,
+            });
 
-        if (!user || user.password !== password) {
-            Alert.alert('Error', 'Invalid username or password');
-            return;
+            const { token } = response.data;
+
+            // Store the JWT token in AsyncStorage
+            await AsyncStorage.setItem('jwt', token);
+
+            // Redirect to home screen after successful login
+            Alert.alert('Login successful');
+            router.push('/');
+
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Login failed. Please check your credentials.');
+        } finally {
+            setIsLoading(false); // Hide loading indicator
         }
-
-        Alert.alert('Success', 'Logged in!');
-        router.replace('/'); // Navigate to home or main screen
     };
 
     return (
@@ -45,8 +60,9 @@ export default function LoginScreen() {
             <TouchableOpacity
                 onPress={handleLogin}
                 className="bg-blue-600 py-3 rounded-xl"
+                disabled={isLoading} // Disable button while loading
             >
-                <Text className="text-white text-center font-semibold">Login</Text>
+                <Text className="text-white text-center font-semibold">{isLoading ? 'Logging in...' : 'Login'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

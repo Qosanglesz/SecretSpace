@@ -1,24 +1,36 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { router } from 'expo-router';
+import axios from 'axios';
 
 export default function RegisterScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (!username || !password) {
             Alert.alert('Error', 'Please fill in all fields');
             return;
         }
 
-        // Simulate saving user (replace with real backend call)
-        const user = { username, password };
-        globalThis.localStorage = globalThis.localStorage || new Map();
-        globalThis.localStorage.set(username, user);
+        try {
+            // ส่งข้อมูลไปที่ API
+            const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/users`, {
+                username,
+                password,
+            });
 
-        Alert.alert('Success', 'Registered successfully!');
-        router.replace('/login');
+            // ตรวจสอบผลลัพธ์จาก API
+            if (response.status === 201) {
+                Alert.alert('Success', 'Registered successfully!');
+                router.replace('/login');
+            } else {
+                Alert.alert('Error', 'Failed to register');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'An error occurred while registering');
+        }
     };
 
     return (
