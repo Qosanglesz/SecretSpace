@@ -7,15 +7,13 @@ import { Request } from 'express';
 export class JwtStrategy extends PassportStrategy(Strategy) {
     constructor() {
         super({
-            jwtFromRequest: ExtractJwt.fromExtractors([
-                (req: Request) => req?.cookies?.jwt,
-            ]),
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // Extract JWT from Authorization header (Bearer token)
             ignoreExpiration: false,
             secretOrKey: String(process.env.JWT_SECRET),
         });
     }
 
     async validate(payload: any) {
-        return { userId: payload.sub, username: payload.username };
+        return { userId: payload.sub, username: payload.username }; // Returning user information from JWT payload
     }
 }
