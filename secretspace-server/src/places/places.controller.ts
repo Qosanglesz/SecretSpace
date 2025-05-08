@@ -3,7 +3,7 @@ import {
   Post,
   Body,
   UploadedFiles,
-  UseInterceptors
+  UseInterceptors, Get
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -15,7 +15,7 @@ export class PlacesController {
 
   @Post()
   @UseInterceptors(
-      FileFieldsInterceptor([{ name: 'images', maxCount: 1 }]) // รับแค่ 1 ภาพ หากต้องการหลายภาพต้องจัดการเพิ่ม
+      FileFieldsInterceptor([{ name: 'images', maxCount: 5 }])
   )
   async create(
       @Body() createPlaceDto: CreatePlaceDto,
@@ -23,5 +23,9 @@ export class PlacesController {
   ) {
     const imageBuffer = files.images?.[0]?.buffer || null;
     return this.placesService.create(createPlaceDto, imageBuffer);
+  }
+  @Get()
+  async findAll() {
+    return this.placesService.findAll();
   }
 }

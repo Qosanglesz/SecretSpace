@@ -24,4 +24,7 @@ export class PlacesService {
 
     return this.placeRepository.save(place);
   }
+  async findAll(): Promise<Place[]> {
+    return this.placeRepository.find();
+  }
 }
