@@ -6,12 +6,14 @@ import {Place} from "./entities/place.entity";
 import {Rating} from "./entities/rating.entity";
 import {Comment} from "./entities/comment.entity";
 import {CloudinaryService} from "../cloudinary/cloudinary.service";
+import {PlaceImage} from "./entities/place-image.entity";
 
 @Module({
   imports: [TypeOrmModule.forFeature([
       Place,
       Rating,
       Comment,
+      PlaceImage,
   ])],
   controllers: [PlacesController],
   providers: [PlacesService, CloudinaryService],

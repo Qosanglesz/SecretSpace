@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Rating } from "./rating.entity";
 import { Comment } from "./comment.entity";
+import {PlaceImage} from "./place-image.entity";
 
 @Entity()
 export class Place {
@@ -26,8 +27,11 @@ export class Place {
     @Column({ type: "decimal", precision: 10, scale: 6 })
     longitude: number;
 
-    @Column({ type: "bytea", nullable: true })
-    image: Buffer | null;
+    @OneToMany(() => PlaceImage, image => image.place, {
+        cascade: true,
+        onDelete: "CASCADE",
+    })
+    images: PlaceImage[];
 
     @OneToMany(() => Rating, rating => rating.place, {
         cascade: true,
