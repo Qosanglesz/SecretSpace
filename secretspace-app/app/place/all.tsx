@@ -114,7 +114,10 @@ export default function AllPlacesScreen() {
                                 <Text className="text-white">View</Text>
                             </TouchableOpacity>
 
-                            <TouchableOpacity className="bg-yellow-500 px-4 py-2 rounded-lg">
+                            <TouchableOpacity
+                                className="bg-yellow-500 px-4 py-2 rounded-lg"
+                                onPress={() => router.push(`/place/update/${place.place_id}`)}
+                            >
                                 <Text className="text-white">Update</Text>
                             </TouchableOpacity>
 

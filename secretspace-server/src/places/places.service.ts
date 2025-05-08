@@ -1,9 +1,10 @@
-import {Injectable, NotFoundException} from '@nestjs/common';
-import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
-import {Place} from './entities/place.entity';
-import {PlaceImage} from './entities/place-image.entity';
-import {CreatePlaceDto} from './dto/create-place.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Place } from './entities/place.entity';
+import { PlaceImage } from './entities/place-image.entity';
+import { CreatePlaceDto } from './dto/create-place.dto';
+import { UpdatePlaceDto } from './dto/update-place.dto'; // Import the UpdatePlaceDto
 
 @Injectable()
 export class PlacesService {
@@ -20,7 +21,7 @@ export class PlacesService {
     const savedPlace = await this.placeRepository.save(place);
 
     const imageEntities = imageBuffers.map(buffer => {
-      return this.placeImageRepository.create({image: buffer, place: savedPlace});
+      return this.placeImageRepository.create({ image: buffer, place: savedPlace });
     });
 
     await this.placeImageRepository.save(imageEntities);
@@ -37,23 +38,64 @@ export class PlacesService {
     return placeWithImages;
   }
 
+  async update(placeId: string, updatePlaceDto: UpdatePlaceDto, imageBuffers: Buffer[]): Promise<Place> {
+    const place = await this.placeRepository.findOne({
+      where: { place_id: placeId },
+      relations: ['images'],
+    });
+
+    if (!place) {
+      throw new NotFoundException('Place not found');
+    }
+
+    // Update place details
+    Object.assign(place, updatePlaceDto);
+
+    const updatedPlace = await this.placeRepository.save(place);
+
+    // Handle image updates
+    if (imageBuffers.length > 0) {
+      // Remove existing images first
+      await this.placeImageRepository.delete({ place: updatedPlace });
+
+      // Add new images
+      const imageEntities = imageBuffers.map(buffer => {
+        return this.placeImageRepository.create({ image: buffer, place: updatedPlace });
+      });
+
+      await this.placeImageRepository.save(imageEntities);
+    }
+
+    // Fetch the updated place with images
+    const placeWithImages = await this.placeRepository.findOne({
+      where: { place_id: updatedPlace.place_id },
+      relations: ['images'],
+    });
+
+    if (!placeWithImages) {
+      throw new NotFoundException('Place not found after update');
+    }
+
+    return placeWithImages;
+  }
+
   async findAll(): Promise<Place[]> {
     return this.placeRepository.find({ relations: ['images'] });
   }
 
   async findOne(id: string): Promise<Place> {
     const place = await this.placeRepository.findOne({
-      where: {place_id: id},
-      relations: ['images']
-    })
+      where: { place_id: id },
+      relations: ['images'],
+    });
     if (!place) {
-      throw new NotFoundException('Place not found after creation');
+      throw new NotFoundException('Place not found');
     }
     return place;
   }
 
   async deleted(id: string): Promise<Place> {
     const place = await this.findOne(id);
-    return this.placeRepository.remove(place)
+    return this.placeRepository.remove(place);
   }
 }
