@@ -4,27 +4,28 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     UpdateDateColumn,
-    OneToMany
+    OneToMany, JoinColumn, ManyToOne
 } from "typeorm";
-import { Rating } from "./rating.entity";
-import { Comment } from "./comment.entity";
+import {Rating} from "./rating.entity";
+import {Comment} from "./comment.entity";
 import {PlaceImage} from "./place-image.entity";
+import {User} from "../../users/entities/user.entity";
 
 @Entity()
 export class Place {
     @PrimaryGeneratedColumn("uuid")
     place_id: string;
 
-    @Column({ type: "varchar", length: 50 })
+    @Column({type: "varchar", length: 50})
     name: string;
 
-    @Column({ type: "text" })
+    @Column({type: "text"})
     description: string;
 
-    @Column({ type: "decimal", precision: 10, scale: 6 })
+    @Column({type: "decimal", precision: 10, scale: 6})
     latitude: number;
 
-    @Column({ type: "decimal", precision: 10, scale: 6 })
+    @Column({type: "decimal", precision: 10, scale: 6})
     longitude: number;
 
     @OneToMany(() => PlaceImage, image => image.place, {
@@ -52,4 +53,8 @@ export class Place {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @ManyToOne(() => User, (user) => user.places, {onDelete: 'CASCADE'})
+    @JoinColumn({name: 'user_id'})
+    user: User;
 }

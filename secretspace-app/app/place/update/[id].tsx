@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { TextInput, Text, Image, ScrollView, Alert, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import MapView, { Marker, MapPressEvent } from 'react-native-maps';
+import React, {useEffect, useState} from 'react';
+import {useLocalSearchParams, useRouter} from 'expo-router';
+import {TextInput, Text, Image, ScrollView, Alert, TouchableOpacity, View, ActivityIndicator} from 'react-native';
+import MapView, {Marker, MapPressEvent} from 'react-native-maps';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ImageBuffer = {
     image: {
@@ -25,7 +26,7 @@ function bufferToBase64(buffer: { data: number[] }): string {
 }
 
 export default function UpdatePlaceScreen() {
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const {id} = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
 
     const [place, setPlace] = useState<Place | null>(null);
@@ -50,7 +51,7 @@ export default function UpdatePlaceScreen() {
 
                 // Pre-fill images
                 if (Array.isArray(placeData.images)) {
-                    setImages(placeData.images.map((img: ImageBuffer) => ({ uri: `data:image/jpeg;base64,${bufferToBase64(img.image)}` })));
+                    setImages(placeData.images.map((img: ImageBuffer) => ({uri: `data:image/jpeg;base64,${bufferToBase64(img.image)}`})));
                 }
             } catch (err) {
                 console.error(err);
@@ -91,8 +92,12 @@ export default function UpdatePlaceScreen() {
         });
 
         try {
+            const token = await AsyncStorage.getItem('jwt');
             await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/places/${id}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`
+                },
             });
 
             Alert.alert('Success', 'Place updated!');
@@ -106,18 +111,20 @@ export default function UpdatePlaceScreen() {
     if (loading) {
         return (
             <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" color="#0000ff" />
+                <ActivityIndicator size="large" color="#0000ff"/>
                 <Text className="mt-2">Loading place...</Text>
             </View>
         );
     }
 
     return (
-        <ScrollView className="flex-1 bg-white px-6 pt-10" contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <ScrollView className="flex-1 bg-white px-6 pt-10" contentContainerStyle={{paddingBottom: 40}}
+                    keyboardShouldPersistTaps="handled">
             <Text className="text-2xl font-semibold mb-4">Update Place</Text>
 
             <Text className="text-sm font-medium mb-1">Name</Text>
-            <TextInput value={name} onChangeText={setName} placeholder="Place name" className="border border-gray-300 rounded-xl p-3 mb-4" />
+            <TextInput value={name} onChangeText={setName} placeholder="Place name"
+                       className="border border-gray-300 rounded-xl p-3 mb-4"/>
 
             <Text className="text-sm font-medium mb-1">Description</Text>
             <TextInput
@@ -131,7 +138,7 @@ export default function UpdatePlaceScreen() {
             <Text className="text-sm font-medium mb-2">Select Location</Text>
             <View className="h-64 rounded-xl overflow-hidden mb-4">
                 <MapView
-                    style={{ flex: 1 }}
+                    style={{flex: 1}}
                     region={
                         latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))
                             ? {
@@ -143,7 +150,7 @@ export default function UpdatePlaceScreen() {
                             : undefined
                     }
                     onPress={(e: MapPressEvent) => {
-                        const { latitude, longitude } = e.nativeEvent.coordinate;
+                        const {latitude, longitude} = e.nativeEvent.coordinate;
                         setLatitude(latitude.toString());
                         setLongitude(longitude.toString());
                     }}
@@ -182,7 +189,7 @@ export default function UpdatePlaceScreen() {
             {images.length > 0 && (
                 <ScrollView horizontal className="mb-4">
                     {images.map((img, index) => (
-                        <Image key={index} source={{ uri: img.uri }} className="w-24 h-24 mr-2 rounded-lg" />
+                        <Image key={index} source={{uri: img.uri}} className="w-24 h-24 mr-2 rounded-lg"/>
                     ))}
                 </ScrollView>
             )}

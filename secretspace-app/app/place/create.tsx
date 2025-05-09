@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { TextInput, Text, Image, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, {useState} from 'react';
+import {TextInput, Text, Image, ScrollView, Alert, TouchableOpacity} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
-import MapView, { Marker, MapPressEvent } from 'react-native-maps';
-import { View } from 'react-native';
+import {useRouter} from 'expo-router';
+import MapView, {Marker, MapPressEvent} from 'react-native-maps';
+import {View} from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 export default function CreatePlaceScreen() {
@@ -19,7 +20,7 @@ export default function CreatePlaceScreen() {
     const pickImages = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             allowsMultipleSelection: true,
-            mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ this is correct
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
         });
 
         if (!result.canceled) {
@@ -44,8 +45,12 @@ export default function CreatePlaceScreen() {
         });
 
         try {
+            const token = await AsyncStorage.getItem('jwt');
             await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/places`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${token}`
+                },
             });
 
             Alert.alert('Success', 'Place created!');
@@ -59,7 +64,7 @@ export default function CreatePlaceScreen() {
     return (
         <ScrollView
             className="flex-1 bg-white px-6 pt-10"
-            contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+            contentContainerStyle={{paddingBottom: 40, flexGrow: 1}}
             keyboardShouldPersistTaps="handled"
         >
             <View className="flex-1">
@@ -85,7 +90,7 @@ export default function CreatePlaceScreen() {
                 <Text className="text-sm font-medium mb-2">Select Location</Text>
                 <View className="h-64 rounded-xl overflow-hidden mb-4">
                     <MapView
-                        style={{ flex: 1 }}
+                        style={{flex: 1}}
                         initialRegion={{
                             latitude: 13.7563,
                             longitude: 100.5018,
@@ -103,7 +108,7 @@ export default function CreatePlaceScreen() {
                                 : undefined
                         }
                         onPress={(e: MapPressEvent) => {
-                            const { latitude, longitude } = e.nativeEvent.coordinate;
+                            const {latitude, longitude} = e.nativeEvent.coordinate;
                             setLatitude(latitude.toString());
                             setLongitude(longitude.toString());
                         }}
@@ -151,7 +156,7 @@ export default function CreatePlaceScreen() {
                         {images.map((img, index) => (
                             <Image
                                 key={index}
-                                source={{ uri: img.uri }}
+                                source={{uri: img.uri}}
                                 className="w-24 h-24 mr-2 rounded-lg"
                             />
                         ))}

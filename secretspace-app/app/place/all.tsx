@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {View, Text, ScrollView, Image, TouchableOpacity, Alert, ActivityIndicator} from 'react-native';
 import axios from 'axios';
 import {useRouter} from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ImageBuffer = {
     image: {
@@ -34,7 +35,13 @@ export default function AllPlacesScreen() {
 
     const fetchPlaces = async () => {
         try {
-            const res = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/places`);
+            const token = await AsyncStorage.getItem('jwt');
+            const res = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/places`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
             if (Array.isArray(res.data)) {
                 setPlaces(res.data);
@@ -62,7 +69,13 @@ export default function AllPlacesScreen() {
                 style: 'destructive',
                 onPress: async () => {
                     try {
-                        await axios.delete(`${process.env.EXPO_PUBLIC_API_URL}/places/${id}`);
+                        const token = await AsyncStorage.getItem('jwt');
+                        await axios.delete(`${process.env.EXPO_PUBLIC_API_URL}/places/${id}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            });
                         await fetchPlaces();
                     } catch (err) {
                         console.error(err);

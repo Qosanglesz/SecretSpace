@@ -8,13 +8,14 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
-  Put, Query,
+  Put, Query, UseGuards, Req,
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
 import { UpdatePlaceDto } from './dto/update-place.dto'; // Import the UpdatePlaceDto
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Place } from './entities/place.entity';
+import {AuthGuard} from "@nestjs/passport";
 
 @Controller('places')
 export class PlacesController {
@@ -22,23 +23,27 @@ export class PlacesController {
 
   @Post()
   @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 5 }]))
+  @UseGuards(AuthGuard('jwt'))
   async create(
       @Body() createPlaceDto: CreatePlaceDto,
       @UploadedFiles() files: { images?: Express.Multer.File[] },
+      @Req() req: { user: { userId: string; } },
   ): Promise<Place> {
     const imageBuffers = files.images?.map(f => f.buffer) || [];
-    return this.placesService.create(createPlaceDto, imageBuffers);
+    return this.placesService.create(createPlaceDto, imageBuffers, req.user.userId);
   }
 
   @Put(':placeId')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 5 }]))
+  @UseGuards(AuthGuard('jwt'))
   async update(
       @Param('placeId', ParseUUIDPipe) placeId: string,
       @Body() updatePlaceDto: UpdatePlaceDto,
       @UploadedFiles() files: { images?: Express.Multer.File[] },
+      @Req() req: { user: { userId: string; } },
   ): Promise<Place> {
     const imageBuffers = files.images?.map(f => f.buffer) || [];
-    return this.placesService.update(placeId, updatePlaceDto, imageBuffers);
+    return this.placesService.update(placeId, updatePlaceDto, imageBuffers, req.user.userId);
   }
 
   @Get('nearby')
@@ -46,6 +51,7 @@ export class PlacesController {
       @Query('lat') lat: string,
       @Query('lng') lng: string,
       @Query('radius') radius = '0.5', // radius in kilometers
+      @Req() req: { user: { userId: string; } },
   ): Promise<Place[]> {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
@@ -55,8 +61,9 @@ export class PlacesController {
   }
 
   @Get()
-  async findAll(): Promise<Place[]> {
-    return this.placesService.findAll();
+  @UseGuards(AuthGuard('jwt'))
+  async findAll(@Req() req: { user: { userId: string; } }): Promise<Place[]> {
+    return this.placesService.findAll(req.user.userId);
   }
 
   @Get(':placeId')
@@ -65,7 +72,11 @@ export class PlacesController {
   }
 
   @Delete(':id')
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<Place> {
-    return this.placesService.deleted(id);
+  @UseGuards(AuthGuard('jwt'))
+  async delete(
+      @Param('id', ParseUUIDPipe) id: string,
+      @Req() req: { user: { userId: string; } }
+  ): Promise<Place> {
+    return this.placesService.deleted(id, req.user.userId);
   }
 }
