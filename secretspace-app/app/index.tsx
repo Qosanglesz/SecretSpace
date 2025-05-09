@@ -1,17 +1,41 @@
-// app/index.tsx
-import {Text, View, TouchableOpacity, SafeAreaView, ActivityIndicator} from 'react-native';
+import { Text, View, ActivityIndicator, TouchableOpacity, Image, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from './context/auth';
 
 export default function Index() {
-    const { username, logout, loading } = useAuth();
+    const [username, setUsername] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
     const router = useRouter();
+
+    useEffect(() => {
+        const checkAuthStatus = async () => {
+            try {
+                const token = await AsyncStorage.getItem('jwt');
+                if (token) {
+                    const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/auth/me`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    setUsername(response.data.username);
+                }
+            } catch (error) {
+                console.error('Error checking auth status:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAuthStatus();
+    }, []);
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await AsyncStorage.removeItem('jwt');
+            setUsername(null); // Reset username after logout
         } catch (error) {
             console.error('Error logging out:', error);
         }
@@ -60,7 +84,7 @@ export default function Index() {
                         <View className="bg-cyan-100 w-12 h-12 rounded-full items-center justify-center mb-2">
                             <Ionicons name="add-outline" size={24} color="#0891b2" />
                         </View>
-                        <Text className="font-medium text-gray-800">Create Place</Text>
+                        <Text className="font-medium text-gray-800">Share Place</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -69,7 +93,7 @@ export default function Index() {
                         <View className="bg-cyan-100 w-12 h-12 rounded-full items-center justify-center mb-2">
                             <Ionicons name="grid-outline" size={24} color="#0891b2" />
                         </View>
-                        <Text className="font-medium text-gray-800">All Places</Text>
+                        <Text className="font-medium text-gray-800">All My Places</Text>
                     </TouchableOpacity>
                 </View>
 
