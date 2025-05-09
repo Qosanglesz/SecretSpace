@@ -50,8 +50,7 @@ export default function AllPlacesScreen() {
                 setPlaces([]); // fallback to empty Array
             }
         } catch (err) {
-            console.error(err);
-            Alert.alert('Error', 'Failed to fetch places');
+            Alert.alert('Error', err.message || 'Failed to fetch places');
         } finally {
             setLoading(false);
         }

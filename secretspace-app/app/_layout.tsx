@@ -51,7 +51,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" options={{
               title: "Login",
               // Prevent going back to protected routes after redirect
-              headerBackVisible: false
+              headerBackVisible: true
             }} />
             <Stack.Screen name="register" options={{ title: "Register" }} />
             <Stack.Screen name="nearby" options={{ title: "Nearby Places" }} />
