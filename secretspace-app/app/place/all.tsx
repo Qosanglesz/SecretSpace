@@ -51,6 +51,9 @@ export default function AllPlacesScreen() {
             }
         } catch (err) {
             Alert.alert('Error', (err as Error).message || 'Failed to fetch places');
+            if (axios.isAxiosError(err) && err.response?.status === 401) {
+                router.push('/login');
+            }
         } finally {
             setLoading(false);
         }

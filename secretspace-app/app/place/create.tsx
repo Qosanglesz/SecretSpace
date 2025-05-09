@@ -57,6 +57,9 @@ export default function CreatePlaceScreen() {
             router.push('/');
         } catch (error) {
             Alert.alert('Error', (error as Error).message);
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                router.push('/login');
+            }
         }
     };
 
