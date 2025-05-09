@@ -56,8 +56,7 @@ export default function CreatePlaceScreen() {
             Alert.alert('Success', 'Place created!');
             router.push('/');
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Something went wrong');
+            Alert.alert('Error', (error as Error).message);
         }
     };
 
