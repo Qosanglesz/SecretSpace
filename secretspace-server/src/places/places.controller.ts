@@ -8,14 +8,21 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
-  Put, Query, UseGuards, Req,
+  Put,
+  Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
-import { UpdatePlaceDto } from './dto/update-place.dto'; // Import the UpdatePlaceDto
+import { UpdatePlaceDto } from './dto/update-place.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateRatingDto } from './dto/create-rating.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Place } from './entities/place.entity';
-import {AuthGuard} from "@nestjs/passport";
+import { Comment } from './entities/comment.entity';
+import { Rating } from './entities/rating.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('places')
 export class PlacesController {
@@ -25,9 +32,9 @@ export class PlacesController {
   @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 5 }]))
   @UseGuards(AuthGuard('jwt'))
   async create(
-      @Body() createPlaceDto: CreatePlaceDto,
-      @UploadedFiles() files: { images?: Express.Multer.File[] },
-      @Req() req: { user: { userId: string; } },
+    @Body() createPlaceDto: CreatePlaceDto,
+    @UploadedFiles() files: { images?: Express.Multer.File[] },
+    @Req() req: { user: { userId: string } },
   ): Promise<Place> {
     const imageBuffers = files.images?.map(f => f.buffer) || [];
     return this.placesService.create(createPlaceDto, imageBuffers, req.user.userId);
@@ -37,10 +44,10 @@ export class PlacesController {
   @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 5 }]))
   @UseGuards(AuthGuard('jwt'))
   async update(
-      @Param('placeId', ParseUUIDPipe) placeId: string,
-      @Body() updatePlaceDto: UpdatePlaceDto,
-      @UploadedFiles() files: { images?: Express.Multer.File[] },
-      @Req() req: { user: { userId: string; } },
+    @Param('placeId', ParseUUIDPipe) placeId: string,
+    @Body() updatePlaceDto: UpdatePlaceDto,
+    @UploadedFiles() files: { images?: Express.Multer.File[] },
+    @Req() req: { user: { userId: string } },
   ): Promise<Place> {
     const imageBuffers = files.images?.map(f => f.buffer) || [];
     return this.placesService.update(placeId, updatePlaceDto, imageBuffers, req.user.userId);
@@ -48,10 +55,9 @@ export class PlacesController {
 
   @Get('nearby')
   async findNearby(
-      @Query('lat') lat: string,
-      @Query('lng') lng: string,
-      @Query('radius') radius = '0.5', // radius in kilometers
-      @Req() req: { user: { userId: string; } },
+    @Query('lat') lat: string,
+    @Query('lng') lng: string,
+    @Query('radius') radius = '0.5', // radius in kilometers
   ): Promise<Place[]> {
     const latitude = parseFloat(lat);
     const longitude = parseFloat(lng);
@@ -62,7 +68,7 @@ export class PlacesController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
-  async findAll(@Req() req: { user: { userId: string; } }): Promise<Place[]> {
+  async findAll(@Req() req: { user: { userId: string } }): Promise<Place[]> {
     return this.placesService.findAll(req.user.userId);
   }
 
@@ -74,9 +80,44 @@ export class PlacesController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   async delete(
-      @Param('id', ParseUUIDPipe) id: string,
-      @Req() req: { user: { userId: string; } }
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: { user: { userId: string } }
   ): Promise<Place> {
     return this.placesService.deleted(id, req.user.userId);
+  }
+
+  // Comment endpoints
+  @Post('comments')
+  @UseGuards(AuthGuard('jwt'))
+  async createComment(
+    @Body() createCommentDto: CreateCommentDto,
+    @Req() req: { user: { userId: string } }
+  ): Promise<Comment> {
+    return this.placesService.createComment(createCommentDto, req.user.userId);
+  }
+
+  @Get(':placeId/comments')
+  async getCommentsByPlace(
+    @Param('placeId', ParseUUIDPipe) placeId: string
+  ): Promise<Comment[]> {
+    return this.placesService.getCommentsByPlace(placeId);
+  }
+
+  // Rating endpoints
+  @Post('ratings')
+  @UseGuards(AuthGuard('jwt'))
+  async createRating(
+    @Body() createRatingDto: CreateRatingDto,
+    @Req() req: { user: { userId: string } }
+  ): Promise<Rating> {
+    return this.placesService.createRating(createRatingDto, req.user.userId);
+  }
+
+  @Get(':placeId/rating')
+  async getAverageRating(
+    @Param('placeId', ParseUUIDPipe) placeId: string
+  ): Promise<{ average: number }> {
+    const average = await this.placesService.getAverageRatingByPlace(placeId);
+    return { average };
   }
 }

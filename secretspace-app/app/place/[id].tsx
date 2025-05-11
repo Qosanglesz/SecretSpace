@@ -16,6 +16,7 @@ import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
+import { CommentSection } from './CommentSection';
 
 const windowWidth = Dimensions.get('window').width;
 
@@ -246,6 +247,10 @@ export default function PlaceDetailScreen() {
                     </View>
                 </View>
             </ScrollView>
+            <CommentSection 
+                placeId={id} 
+                onCommentAdded={() => fetchPlaceDetails(id)}
+            />
         </SafeAreaView>
     );
 }

@@ -1,25 +1,23 @@
-import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    PrimaryGeneratedColumn,
-    ManyToOne
-} from "typeorm";
-import {Place} from "./place.entity";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
+import { Place } from './place.entity';
+import { Comment } from './comment.entity';
 
-@Entity()
+@Entity('ratings')
 export class Rating {
-    @PrimaryGeneratedColumn("uuid")
-    rating_id: string;
+  @PrimaryGeneratedColumn('uuid')
+  rating_id: string;
 
-    @Column({ type: "int", width: 1 })
-    stars: number;
+  @Column({ type: 'int' })
+  value: number;
 
-    @ManyToOne(() => Place, place => place.ratings, {
-        onDelete: "CASCADE"
-    })
-    place: Place;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @ManyToOne(() => Place, place => place.ratings)
+  @JoinColumn({ name: 'place_id' })
+  place: Place;
+
+  @OneToOne(() => Comment, comment => comment.rating)
+  @JoinColumn({ name: 'comment_id' })
+  comment: Comment;
 }
