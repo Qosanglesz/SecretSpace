@@ -12,6 +12,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
 import { PlacesService } from './places.service';
 import { CreatePlaceDto } from './dto/create-place.dto';
@@ -23,6 +24,8 @@ import { Place } from './entities/place.entity';
 import { Comment } from './entities/comment.entity';
 import { Rating } from './entities/rating.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { Response } from 'express';
+
 
 @Controller('places')
 export class PlacesController {
@@ -120,4 +123,18 @@ export class PlacesController {
     const average = await this.placesService.getAverageRatingByPlace(placeId);
     return { average };
   }
+
+  @Get('images/:imageId')
+  async getImage(
+    @Param('imageId') imageId: string,
+    @Res() res: Response
+  ): Promise<any> {
+    const image = await this.placesService.findImage(imageId);
+    
+    // Set appropriate content type
+    res.set('Content-Type', 'image/jpeg');
+    // Send the binary data directly
+    return res.send(image.image);
+  }
+  
 }

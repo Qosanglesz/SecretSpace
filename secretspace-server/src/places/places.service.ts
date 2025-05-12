@@ -10,6 +10,7 @@ import { UpdatePlaceDto } from './dto/update-place.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateRatingDto } from './dto/create-rating.dto';
 
+
 @Injectable()
 export class PlacesService {
   constructor(
@@ -89,20 +90,23 @@ export class PlacesService {
     return placeWithImages;
   }
 
-  async findNearby(lat: number, lng: number, radiusKm: number): Promise<Place[]> {
-    const earthRadius = 6371; // Earth radius in kilometers
-
+// In places.service.ts or similar file
+  async findNearby(latitude: number, longitude: number, distance: number = 0.5) {
     return this.placeRepository
       .createQueryBuilder('place')
       .leftJoinAndSelect('place.images', 'image')
       .leftJoinAndSelect('place.ratings', 'rating')
-      .where(`
-        ${earthRadius} * acos(
-          cos(radians(:lat)) * cos(radians(place.latitude)) *
-          cos(radians(place.longitude) - radians(:lng)) +
-          sin(radians(:lat)) * sin(radians(place.latitude))
-        ) < :radius
-      `, { lat, lng, radius: radiusKm })
+      .where(`6371 * acos(
+            LEAST(1, GREATEST(-1, 
+              cos(radians(:lat)) * cos(radians(place.latitude)) *
+              cos(radians(place.longitude) - radians(:lng)) +
+              sin(radians(:lat)) * sin(radians(place.latitude))
+            ))
+          ) < :distance`, {
+        lat: latitude,
+        lng: longitude,
+        distance: distance
+      })
       .getMany();
   }
 
@@ -218,5 +222,17 @@ export class PlacesService {
       .getRawOne();
 
     return result.average ? parseFloat(result.average) : 0;
+  }
+
+  async findImage(imageId: string): Promise<PlaceImage> {
+    const image = await this.placeImageRepository.findOne({
+      where: { id: imageId }
+    });
+    
+    if (!image) {
+      throw new NotFoundException(`Image with ID ${imageId} not found`);
+    }
+    
+    return image;
   }
 }

@@ -17,5 +17,6 @@ import { PlaceImage } from "./entities/place-image.entity";
   ])],
   controllers: [PlacesController],
   providers: [PlacesService, CloudinaryService],
+  exports: [PlacesService],
 })
 export class PlacesModule {}
