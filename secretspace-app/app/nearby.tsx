@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 
 type Place = {
     place_id: string;
@@ -26,6 +27,9 @@ type Place = {
 };
 
 export default function NearbyScreen() {
+    // Get URL parameters
+    const params = useLocalSearchParams();
+    
     const [latitude, setLatitude] = useState<string>('');
     const [longitude, setLongitude] = useState<string>('');
     const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lon: number } | null>(
@@ -34,6 +38,33 @@ export default function NearbyScreen() {
     const [places, setPlaces] = useState<Place[]>([]);
     const [loading, setLoading] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    
+    // Use a ref to track if we've already fetched places for the current location
+    const lastFetchedLocation = useRef<string>('');
+    
+    // Check for parameters from AI suggestions
+    useEffect(() => {
+        if (params.lat && params.lng) {
+            // console.log('Received coordinates from params:', params.lat, params.lng);
+            setLatitude(params.lat as string);
+            setLongitude(params.lng as string);
+            
+            // If coming from AI, automatically search for nearby places
+            if (params.fromAI === 'true') {
+                const timer = setTimeout(() => {
+                    const locationKey = `${params.lat},${params.lng}`;
+                    if (lastFetchedLocation.current !== locationKey) {
+                        fetchNearbyPlaces();
+                        lastFetchedLocation.current = locationKey;
+                    }
+                }, 500); // Short delay to ensure state is updated
+                return () => clearTimeout(timer);
+            }
+        } else {
+            // If no params, get current location
+            handleUseCurrentLocation();
+        }
+    }, [params]); // Run when params change
 
     // Sync marker if lat/lon input changes
     useEffect(() => {
@@ -44,16 +75,14 @@ export default function NearbyScreen() {
         }
     }, [latitude, longitude]);
 
-    // Get user location on first load
-    useEffect(() => {
-        handleUseCurrentLocation();
-    }, []);
-
     const handleMapPress = (e: any) => {
         const { latitude, longitude } = e.nativeEvent.coordinate;
         setLatitude(latitude.toString());
         setLongitude(longitude.toString());
         setSelectedLocation({ lat: latitude, lon: longitude });
+        
+        // Reset the last fetched location so we can fetch again if the user presses Search
+        lastFetchedLocation.current = '';
     };
 
     const handleUseCurrentLocation = async () => {
@@ -69,6 +98,9 @@ export default function NearbyScreen() {
             setLatitude(latitude.toString());
             setLongitude(longitude.toString());
             setSelectedLocation({ lat: latitude, lon: longitude });
+            
+            // Reset the last fetched location so we can fetch again
+            lastFetchedLocation.current = '';
         } catch (error) {
             console.error('Error getting location:', error);
             Alert.alert('Location Error', 'Could not get your current location');
@@ -80,6 +112,13 @@ export default function NearbyScreen() {
             Alert.alert('Missing location', 'Please select a location');
             return;
         }
+        
+        // Check if we've already fetched for this location
+        const locationKey = `${latitude},${longitude}`;
+        if (lastFetchedLocation.current === locationKey) {
+            // console.log('Already fetched places for this location');
+            return;
+        }
 
         setLoading(true);
         try {
@@ -88,6 +127,8 @@ export default function NearbyScreen() {
                 throw new Error('API URL is not defined');
             }
 
+            // console.log(`Fetching places near ${latitude}, ${longitude}`);
+            
             const res = await axios.get(`${apiUrl}/places/nearby`, {
                 params: {
                     lat: latitude,
@@ -96,7 +137,12 @@ export default function NearbyScreen() {
                 },
                 timeout: 10000, // 10 seconds timeout
             });
+            
+            // Update the last fetched location
+            lastFetchedLocation.current = locationKey;
+            
             setPlaces(res.data || []);
+            // console.log(`Found ${res.data.length} places nearby`);
         } catch (err) {
             console.error('Failed to fetch places:', err);
             if (axios.isAxiosError(err) && err.message === 'Network Error') {
@@ -117,9 +163,39 @@ export default function NearbyScreen() {
     const screenHeight = Dimensions.get('window').height;
     const mapHeight = isCollapsed ? screenHeight * 0.85 : screenHeight * 0.6;
     const inputHeight = isCollapsed ? screenHeight * 0.15 : screenHeight * 0.25;
+    
+    // Memoize the results panel to prevent unnecessary re-renders
+    const ResultsPanel = React.useMemo(() => {
+        if (loading || places.length === 0) return null;
+        
+        return (
+            <View className="absolute bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200">
+                <Text className="font-semibold mb-1">Nearby Places ({places.length})</Text>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 4 }}
+                >
+                    {places.map((place) => (
+                        <TouchableOpacity
+                            key={place.place_id}
+                            onPress={() => router.push(`/place/${place.place_id}`)}
+                            className="bg-gray-100 rounded-lg p-2 mr-2 shadow"
+                        >
+                            <Text className="font-semibold">{place.name}</Text>
+                            <Text className="text-xs text-gray-500 w-32" numberOfLines={2}>
+                                {place.description}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
+        );
+    }, [places, loading]);
 
     return (
         <SafeAreaView className="flex-1 bg-white">
+            
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -195,7 +271,10 @@ export default function NearbyScreen() {
                         <View className="flex-row gap-2 mb-2">
                             <TextInput
                                 value={latitude}
-                                onChangeText={setLatitude}
+                                onChangeText={(text) => {
+                                    setLatitude(text);
+                                    lastFetchedLocation.current = ''; // Reset when input changes
+                                }}
                                 keyboardType="decimal-pad"
                                 placeholder="Latitude"
                                 className="border border-gray-300 rounded-xl p-2 flex-1"
@@ -203,7 +282,10 @@ export default function NearbyScreen() {
 
                             <TextInput
                                 value={longitude}
-                                onChangeText={setLongitude}
+                                onChangeText={(text) => {
+                                    setLongitude(text);
+                                    lastFetchedLocation.current = ''; // Reset when input changes
+                                }}
                                 keyboardType="decimal-pad"
                                 placeholder="Longitude"
                                 className="border border-gray-300 rounded-xl p-2 flex-1"
@@ -226,30 +308,26 @@ export default function NearbyScreen() {
                     </View>
                 )}
 
-                {/* Results panel */}
-                {!loading && places.length > 0 && (
-                    <View className="absolute bottom-0 left-0 right-0 bg-white p-3 border-t border-gray-200">
-                        <Text className="font-semibold mb-1">Nearby Places</Text>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 4 }}
-                        >
-                            {places.map((place) => (
-                                <TouchableOpacity
-                                    key={place.place_id}
-                                    onPress={() => router.push(`/place/${place.place_id}`)}
-                                    className="bg-gray-100 rounded-lg p-2 mr-2 shadow"
-                                >
-                                    <Text className="font-semibold">{place.name}</Text>
-                                    <Text className="text-xs text-gray-500 w-32" numberOfLines={2}>
-                                        {place.description}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-                )}
+                {/* Results panel - using memoized component */}
+                {ResultsPanel}
+                
+                <View className="absolute bottom-20 right-4 flex-col">
+                    {/* AI Suggestions button */}
+                    <TouchableOpacity
+                        className="bg-blue-600 p-3 rounded-full shadow-lg"
+                        onPress={() => router.push('/ai-suggestions')}
+                    >
+                        <Ionicons name="bulb" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+
+                    {/* Home button */}
+                    <TouchableOpacity
+                        className="bg-green-600 p-3 rounded-full shadow-lg mt-6"
+                        onPress={() => router.push('/')}
+                    >
+                        <Ionicons name="home" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
