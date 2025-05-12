@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 // Define the shape of our auth context
-type AuthContextType = {
+export type AuthContextType = {
     isAuthenticated: boolean;
     username: string | null;
     loading: boolean;
@@ -14,7 +14,7 @@ type AuthContextType = {
 };
 
 // Create the context with default values
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
     username: null,
     loading: true,
@@ -108,3 +108,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         </AuthContext.Provider>
     );
 };
+
+// Add this default export
+export default AuthProvider;

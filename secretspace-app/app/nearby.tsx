@@ -16,6 +16,7 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 
 type Place = {
     place_id: string;
@@ -250,6 +251,23 @@ export default function NearbyScreen() {
                         </ScrollView>
                     </View>
                 )}
+                <View className="absolute bottom-20 right-4 flex-col">
+                    {/* AI Suggestions button */}
+                    <TouchableOpacity
+                        className="bg-blue-600 p-3 rounded-full shadow-lg"
+                        onPress={() => router.push('/ai-suggestions')}
+                    >
+                        <Ionicons name="bulb" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+
+                    {/* Home button */}
+                    <TouchableOpacity
+                        className="bg-green-600 p-3 rounded-full shadow-lg mt-6"
+                        onPress={() => router.push('/')}
+                    >
+                        <Ionicons name="home" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
