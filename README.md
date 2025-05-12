@@ -19,6 +19,8 @@ this problem by providing a platform where users can easily find and share quiet
 - Special interest groups: Students, remote workers, freelancers, and book lovers.
 
 ## Application Preview
+<img width="358" alt="image" src="https://github.com/user-attachments/assets/0ee7a990-9442-4b35-943b-85bf7af99415" />
+
 
 ## Requirement
 1. NodeJs
