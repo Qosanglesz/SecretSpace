@@ -5,6 +5,7 @@ import { PlacesModule } from './places/places.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       DatabaseModule,
       PlacesModule,
       UsersModule,
-      AuthModule
+      AuthModule,
+      AiModule,
   ],
   controllers: [],
   providers: [],
